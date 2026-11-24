@@ -59,3 +59,11 @@
 - Asked: "commit this"
 - Changed: Committed `spec.md` and this prompt log update; left app and other untracked files untouched.
 - Worked: Yes; commit created successfully.
+
+- Asked: Write a short `README.md` describing the app, packages to install, and startup command.
+- Changed: Added a concise overview, requirements, install command, and launch command.
+- Worked: Yes; commands match `requirements.txt` and the app entry point.
+
+- Asked: "commit this"
+- Changed: Committed `README.md` and this prompt-log entry only; unrelated app files remain untouched.
+- Worked: Yes; commit created successfully.
