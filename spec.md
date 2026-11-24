@@ -4,7 +4,7 @@ Project requirements will be recorded here.
 # Beam Designer
 
 ## Platform
-- Python desktop app using Tkinter, started with `python app.py`
+- Python 3.10+ desktop app using Tkinter, started with `python app.py`
 - Calculations with numpy, kept in their own module, separate from
   the window code
 - Diagrams drawn with matplotlib, embedded in the window
@@ -107,6 +107,12 @@ sizing a floor beam or deck joist.
 - A line suggesting the lightest passing section, with a button to use it.
 - Recompute and refresh outputs immediately whenever inputs are valid.
 - Add a before/after comparison to show how diagrams checks change when applying a recommended section
+- An Export CSV button saves x, shear V, moment M, and deflection y at each
+  analyzed position, with units in the column headers, for use in Excel. The
+  export uses the right-side shear value at load discontinuities.
+- A Calculation Sheet PDF button saves a printable report with the current
+  inputs at the top, the beam drawing and diagrams, reactions, and the selected
+  section's bending and deflection checks.
 
 ### Unavailable states
 - If any required input is invalid, show its inline error and mark the beam
@@ -161,62 +167,66 @@ sizing a floor beam or deck joist.
 ## Out of scope
 - Self-weight, shear stress, lateral-torsional buckling, load
   combinations, and continuous beams.
-- Saving designs.
+
+## Save and open
+- A File menu provides Save and Open commands.
+- Designs are versioned JSON files that preserve support type, span, material,
+  section, deflection limit, and all point and uniform loads.
+- Save validates the current inputs. The first save prompts for a file path;
+  subsequent saves write to that path.
+- Open validates a design before replacing the current inputs. Invalid files
+  show an error and leave the current design unchanged.
 
 ## Build Stages
 
-Build the single-file app in six small increments. Start with a static visual
-mockup and add inputs, calculations, checks, recommendations, and polish only
-after each preceding stage is testable. Keep application code in the root
-`index.html`.
+Build the Python desktop app in testable increments. Keep the Tkinter window
+in `app.py` and all beam calculations in `beam_calculations.py`; calculation
+tests must run without creating a Tk window.
 
-1. **Static page mockup**
-   - Create the responsive page structure: branded header, input panel,
-     beam drawing, three diagram placeholders, check cards, and recommendation
-     area. Use static example content only; no live input behavior or
-     calculations.
-   - **Check:** Open `index.html` directly. Confirm the full desktop layout is
-     legible, panels stack on a phone-sized viewport, and all required output
-     areas have clear placeholders.
+1. **Desktop window and layout**
+   - Create the resizable Tkinter window, BYU-branded header, left input panel,
+     right analysis panel, diagram placeholders, check cards, and recommendation
+     area. Load the default example.
+   - **Check:** Run `python app.py`; confirm the window opens and resizes, with
+     all required areas visible and legible.
 
 2. **Inputs and validation**
-   - Add controls and state for supports, span, point and uniform loads,
-     material/section, and deflection limit. Add, edit, and remove loads;
-     implement point-load dragging; and show inline validation and unavailable
-     states. Keep analysis values as placeholders.
-   - **Check:** Verify defaults; add, edit, and remove each load type; test
-     span limits, point-load endpoints, uniform-load clipping/rejection,
-     invalid and blank values, and 0.25 ft dragging. Invalid inputs must not
-     leave stale analysis visible.
+   - Add support, span, load, material/section, and deflection-limit controls.
+     Add, edit, and remove loads; implement 0.25 ft point-load dragging; show
+     field-level validation and unavailable result states.
+   - **Check:** Exercise defaults, load editing, span boundaries, point-load
+     endpoints, uniform-load clipping/rejection, blank/non-finite values, and
+     dragging. Invalid inputs must not leave stale results visible.
 
 3. **Reactions, shear, and moment**
    - Implement statics for both support types and signed point and uniform
-     loads. Plot shear and moment on the beam's x scale, including load
-     locations and critical points.
-   - **Check:** Verify reactions and diagrams for validation cases 1 and 2,
-     plus the cantilever reaction and fixed-end moment in case 3. Check units,
-     signs, and values at load discontinuities.
+     loads in the UI-independent calculation module. Plot the diagrams on the
+     beam's shared x scale.
+   - **Check:** Run `python -m unittest discover -s tests -v`; verify reactions
+     and diagrams for validation cases 1-3 and the partial-uniform-load case.
 
 4. **Deflection and selected-section checks**
-   - Compute deflected shape with support boundary conditions. Calculate
-     bending stress and deflection ratios, then show actual/allowable values
-     and PASS/FAIL for the selected section.
-   - **Check:** Compare cases 1-4 with the specified stress, deflection, and
-     pass/fail results. Confirm inch/ft conversions and that invalid input
-     makes results unavailable.
+   - Integrate the moment response with the support boundary conditions.
+     Calculate bending stress and deflection checks for the selected section.
+   - **Check:** Verify cases 1-4, including values, units, pass/fail, and
+     unavailable outputs for invalid inputs.
 
-5. **Section recommendation**
-   - Evaluate the available sections in the selected material, rank passing
-     steel sections by weight with the specified tie-break, and select the
-     first passing lumber size. Add the use-recommendation action and the
-     no-section-passes state.
-   - **Check:** Exercise a case where at least one section passes, a case
-     where none passes, both materials, the steel tie-break, and applying a
-     suggested section.
+5. **Recommendations and comparison**
+   - Evaluate sections in the selected material, use the specified weight
+     ordering and steel tie-break, and handle the no-passing-section state.
+     Applying a suggestion should show before/after checks and deflected shape.
+   - **Check:** Test passing and failing recommendations, both materials, the
+     steel tie-break, and applying a suggested section.
 
 6. **Interaction and acceptance polish**
-   - Add linked diagram cursor values, touch-friendly inspection, labels and
-     tooltips, final BYU styling, and responsive/error-state refinements.
-   - **Check:** Test mouse and touch inspection at arbitrary beam positions,
-     keyboard-operable controls, desktop and phone layouts, unavailable
-     <!-- states, and all prior validation cases. -->
+   - Add linked diagram cursor values, keyboard inspection, tooltips, campus
+     examples, final BYU styling, save/open, CSV and calculation-sheet PDF
+     export, and responsive/error-state refinements.
+   - **Check:** Test arbitrary diagram inspection, keyboard-operable controls,
+     window resizing, unavailable states, and all prior validation cases.
+     Save and reopen a design with both load types; reject malformed and
+     invalid design files without changing the open design.
+     Export CSV and verify the header, units, row values, and Excel-compatible
+     encoding.
+     Export a calculation-sheet PDF and verify its inputs, diagrams, reactions,
+     and selected-section checks.
